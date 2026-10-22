@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Satkaar Sweets — Inventory Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--maroon:#7a1215;--maroon-d:#570c0f;--gold:#d98e2b;--gold-d:#b06f12;--cream:#faf3e7;
+--ink:#2c1a12;--muted:#93796a;--line:#f0e3d0;--red:#d64545;--green:#1f7a43}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink)}
+h1,h2,h3{font-family:'Poppins',sans-serif}
+
+/* ---------- Top bar ---------- */
+.topbar{background:linear-gradient(120deg,var(--maroon-d),var(--maroon) 55%,#93231f);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{width:56px;height:56px;background:#fffaf2;border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.25);flex-shrink:0;overflow:hidden}
+.logo b{font-family:'Poppins';font-size:22px;color:var(--maroon);line-height:1.1}
+.logo span{font-size:6.5px;letter-spacing:2px;color:var(--gold-d);font-weight:700}
+#headLogoImg{width:56px;height:56px;object-fit:contain;border-radius:14px;background:#fffaf2;padding:5px;box-shadow:0 3px 10px rgba(0,0,0,.25);flex-shrink:0}
+.brand h1{font-size:21px;line-height:1.15}
+.brand p{font-size:11.5px;color:#eec27d;font-weight:600;letter-spacing:.5px}
+.top-right{margin-left:auto;text-align:right}
+.datechip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:6px 14px;border-radius:99px;font-size:12.5px}
+
+/* ---------- Nav ---------- */
+nav{background:var(--maroon-d);display:flex;justify-content:center;gap:4px;padding:0 10px;position:sticky;top:0;z-index:20;overflow-x:auto}
+nav button{background:none;border:none;color:#f3d9b0;font:600 13.5px 'Poppins';padding:13px 20px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.active{color:#fff;border-color:var(--gold)}
+
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
+section.tab{display:none}section.tab.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+
+/* ---------- Cards & stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(90,50,20,.06);display:flex;gap:14px;align-items:center}
+.stat .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.stat .num{font:700 22px 'Poppins'}
+.stat .lb{font-size:11.5px;color:var(--muted);font-weight:600}
+.card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(90,50,20,.06);margin-bottom:20px}
+.sec{font-size:16.5px;color:var(--maroon);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec::before{content:'';width:4px;height:18px;background:var(--gold);border-radius:2px}
+
+/* ---------- Buttons & inputs ---------- */
+.btn{background:var(--maroon);color:#fff;border:none;border-radius:9px;padding:10px 16px;font:600 13.5px 'Inter';cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.btn:hover{background:var(--maroon-d)}
+.btn.gold{background:var(--gold)}.btn.gold:hover{background:var(--gold-d)}
+.btn.green{background:var(--green)}.btn.green:hover{background:#166035}
+.btn.ghost{background:#fff;color:var(--maroon);border:1.5px solid var(--maroon)}
+.btn.danger{background:#fff;color:#b3261e;border:1.5px solid #b3261e}
+.btn.sm{padding:7px 12px;font-size:12.5px}
+.in{padding:9px 12px;border:1.5px solid #e8d8bf;border-radius:9px;background:#fff;font:inherit;font-size:13.5px;outline:none;min-width:0}
+.in:focus{border-color:var(--gold)}
+label{font-size:12px;font-weight:600;color:#6b5445;display:block;margin-bottom:4px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.toolbar .grow{flex:1;min-width:180px}
+
+/* ---------- Table ---------- */
+.tw{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{background:var(--maroon);color:#fff;font:600 12px 'Inter';padding:11px 10px;text-align:left;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f5ead8;font-size:13.5px;vertical-align:middle}
+tbody tr:hover{background:#fdf7ec}
+tr.low{background:#fdeeee}tr.low:hover{background:#fbe4e4}
+tr.out{background:#f9dcdc}
+td.stock{font-weight:700}
+tr.low td.stock,tr.out td.stock{color:#b3261e}
+.thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--line);display:block}
+.ph{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f7e8d0,#eed7b4);color:#a06a1c;font:700 17px 'Poppins'}
+.badge{padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-low{background:#fde3e3;color:#b3261e}.b-out{background:#b3261e;color:#fff}.b-ok{background:#e2f3e8;color:#1f7a43}
+.b-sale{background:#fde8e8;color:#b3261e}.b-rec{background:#e2f3e8;color:#1f7a43}
+.sub{font-size:11.5px;color:var(--muted)}
+.ibtn{border:none;background:#f6ead6;border-radius:8px;width:31px;height:31px;cursor:pointer;font-size:14px;margin-right:4px;transition:.15s}
+.ibtn:hover{background:var(--gold)}.ibtn.danger:hover{background:#d64545}
+.empty{padding:34px;text-align:center;color:var(--muted)}
+.empty .btn{margin-top:12px}
+
+/* ---------- Modal ---------- */
+.ov{position:fixed;inset:0;background:rgba(46,15,10,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.ov.on{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:92vh;overflow:auto;padding:22px}
+.modal h3{color:var(--maroon);margin-bottom:16px;font-size:18px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.full{grid-column:1/-1}
+.mfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.imgpick{display:flex;gap:14px;align-items:center}
+#iprev{width:76px;height:76px;border-radius:14px;object-fit:cover;border:1.5px dashed var(--gold);background:#fdf3e3}
+.iprev-ph{display:flex!important;align-items:center;justify-content:center;font:700 26px 'Poppins';color:#c2913e}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#2c1a12;color:#fff;padding:12px 22px;border-radius:99px;font-size:13.5px;z-index:99;transition:.3s;opacity:0;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw;text-align:center}
+#toast.on{transform:translateX(-50%);opacity:1}
+.note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.stats{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+@media(max-width:520px){.stats{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo" id="headLogoBox"><div style="text-align:center"><b>S</b><br><span>SWEETS</span></div></div>
+  <img id="headLogoImg" style="display:none" alt="Logo">
+  <div class="brand"><h1>Satkaar Sweets</h1><p>RESTAURANT &nbsp;|&nbsp; BAKERY &nbsp;|&nbsp; BANQUET</p></div>
+  <div class="top-right"><span class="datechip" id="todayChip"></span></div>
+</header>
+
+<nav>
+  <button class="active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button data-tab="inventory" onclick="switchTab('inventory')">📦 Inventory / Stock</button>
+  <button data-tab="entries" onclick="switchTab('entries')">🧾 Sale & Receive Entries</button>
+  <button data-tab="reports" onclick="switchTab('reports')">📄 Reports / Excel</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= DASHBOARD ================= -->
+<section class="tab on" id="tab-dashboard">
+  <div class="stats">
+    <div class="stat"><div class="ic" style="background:#f6e8d2">📦</div><div><div class="num" id="stItems">0</div><div class="lb">Total Items</div></div></div>
+    <div class="stat"><div class="ic" style="background:#fdeaea">💰</div><div><div class="num" id="stValue">₹0</div><div class="lb">Total Stock Value</div></div></div>
+    <div class="stat"><div class="ic" style="background:#fdeaea">⚠️</div><div><div class="num" id="stLow">0</div><div class="lb">Low Stock Items</div></div></div>
+    <div class="stat"><div class="ic" style="background:#e2f3e8">🛒</div><div><div class="num" id="stToday">₹0</div><div class="lb">Aaj ki Sale</div></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h2 class="sec">⚠️ Stock Khatam Hone Wala Hai</h2>
+      <div class="tw"><table style="min-width:420px">
+        <thead><tr><th>Item</th><th>In Stock</th><th>Min. Required</th><th>Suggested Order</th></tr></thead>
+        <tbody id="dashLow"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2 class="sec">🕒 Recent Entries</h2>
+      <div class="tw"><table style="min-width:420px">
+        <thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
+        <tbody id="dashRecent"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INVENTORY ================= -->
+<section class="tab" id="tab-inventory">
+  <div class="card">
+    <div class="toolbar">
+      <div class="grow"><label>Search</label><input class="in" style="width:100%" id="invSearch" placeholder="Item ka naam ya category..." oninput="renderInventory()"></div>
+      <div><label>Category</label><select class="in" id="invCat" onchange="renderInventory()"><option value="">All</option></select></div>
+      <button class="btn gold" onclick="openItem()">➕ Add New Item</button>
+    </div>
+    <div class="tw"><table style="min-width:960px">
+      <thead><tr><th>Photo</th><th>Item</th><th>Unit</th><th>Rate</th><th>Received</th><th>Sold</th><th>In Stock</th><th>Stock Value</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="invBody"></tbody></table></div>
+    <p class="note">🔴 Laal rows = stock khatam hone wala hai (min. level se neeche). 🛒 = quick sale entry, ➕ = quick receive, ✏️ = edit, 🗑️ = delete.</p>
+  </div>
+</section>
+
+<!-- ================= ENTRIES ================= -->
+<section class="tab" id="tab-entries">
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn" onclick="openTxn('sale')">🛒 New Sale Entry</button>
+      <button class="btn green" onclick="openTxn('receive')">➕ New Receive Entry</button>
+      <div style="flex:1"></div>
+      <div><label>Type</label><select class="in" id="ftType" onchange="renderTxns()"><option value="">All</option><option value="sale">Sale</option><option value="receive">Receive</option></select></div>
+      <div><label>From</label><input type="date" class="in" id="ftFrom" onchange="renderTxns()"></div>
+      <div><label>To</label><input type="date" class="in" id="ftTo" onchange="renderTxns()"></div>
+      <div class="grow"><label>Search</label><input class="in" style="width:100%" id="ftSearch" placeholder="Item/note..." oninput="renderTxns()"></div>
+    </div>
+    <div class="tw"><table style="min-width:820px">
+      <thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Note</th><th>Action</th></tr></thead>
+      <tbody id="txnBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- ================= REPORTS ================= -->
+<section class="tab" id="tab-reports">
+  <div class="card">
+    <h2 class="sec">🏪 Restaurant Logo</h2>
+    <div class="toolbar" style="align-items:center">
+      <div id="logoPrev"></div>
+      <div>
+        <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="pickLogo(this)">
+        <button class="btn gold" onclick="document.getElementById('logoFile').click()">📷 Logo Upload Karein</button>
+        <button class="btn ghost" onclick="removeLogo()">🗑️ Logo Hataayein</button>
+        <p class="note">PNG (transparent background) best rahega. Logo website header aur <b>saari PDF reports</b> mein dikhega.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">📄 PDF Report Download</h2>
+    <div class="toolbar">
+      <div><label>From Date</label><input type="date" class="in" id="repFrom"></div>
+      <div><label>To Date</label><input type="date" class="in" id="repTo"></div>
+      <div><label>Report Type</label><select class="in" id="repType">
+        <option value="low">⚠️ Low Stock Alert</option>
+        <option value="complete">📚 Complete Report (Sab kuch)</option>
+        <option value="sales">🛒 Sales Report</option>
+        <option value="receive">📥 Purchase / Receive Report</option>
+        <option value="inventory">📦 Current Stock Report</option>
+      </select></div>
+      <div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="repPhotos" checked style="width:16px;height:16px"> Photos PDF mein</label></div>
+      <button class="btn" onclick="makePDF()">⬇️ Download PDF</button>
+      <button class="btn gold" onclick="makeExcel()">⬇️ Download Excel</button>
+    </div>
+    <p class="note">Date range sirf Sales / Receive / Complete report par lagti hai. Low Stock & Stock Report hamesha current stock ki banti hai.</p>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">📊 Excel Mein Entry / Import</h2>
+    <div class="toolbar">
+      <button class="btn ghost" onclick="downloadTemplate()">📥 Item Template Download</button>
+      <input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="doImport(this)">
+      <button class="btn green" onclick="document.getElementById('impFile').click()">📤 Excel Upload Karke Import</button>
+    </div>
+    <p class="note"><b>Items import columns:</b> Item Name | Category | Unit | Rate | Min Stock | Opening Stock<br>
+    <b>Entries (Sale/Receive) import columns:</b> Date | Type | Item Name | Qty | Rate | Note &nbsp;(Type mein "Sale" ya "Receive" likhein, date <b>dd-mm-yyyy</b> ya <b>yyyy-mm-dd</b>)</p>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">💾 Backup & Settings</h2>
+    <div class="toolbar">
+      <button class="btn ghost" onclick="backupData()">⬇️ Backup Download (JSON)</button>
+      <input type="file" id="resFile" accept=".json" style="display:none" onchange="restoreData(this)">
+      <button class="btn gold" onclick="document.getElementById('resFile').click()">⬆️ Backup Restore</button>
+      <button class="btn ghost" onclick="loadDemo()">🧪 Demo Data Load</button>
+      <button class="btn danger" onclick="resetAll()">🗑️ Sab Data Delete</button>
+    </div>
+    <p class="note">⚠️ Aapka saara data isi browser mein save hota hai. Phone/computer badalne se pehle <b>Backup</b> zaroor lein!</p>
+  </div>
+</section>
+
+</div>
+
+<!-- ================= ITEM MODAL ================= -->
+<div class="ov" id="mItem" onclick="if(event.target===this)closeM('mItem')">
+  <form class="modal" id="fItem" onsubmit="saveItem(event)">
+    <h3 id="miTitle">➕ Add New Item</h3>
+    <input type="hidden" id="iId">
+    <div class="fgrid">
+      <div class="full"><label>Item Photo</label>
+        <div class="imgpick">
+          <img id="iprev" class="iprev-ph" src="" alt=""> 
+          <div><input type="file" id="iPhoto" accept="image/*" style="display:none" onchange="pickPhoto(this)">
+          <button type="button" class="btn ghost sm" onclick="document.getElementById('iPhoto').click()">📷 Photo Choose Karein</button>
+          <p class="note">Photo auto-compress hokar save hogi</p></div>
+        </div>
+      </div>
+      <div class="full"><label>Item Name *</label><input class="in" style="width:100%" id="iName" required placeholder="e.g. Kaju Katli"></div>
+      <div><label>Category</label><input class="in" style="width:100%" id="iCat" list="cats" value="Sweets">
+        <datalist id="cats"><option>Sweets</option><option>Bakery</option><option>Restaurant</option><option>Namkeen</option><option>Dry Fruits</option><option>Beverages</option><option>Packaging</option><option>Other</option></datalist></div>
+      <div><label>Unit</label><select class="in" style="width:100%" id="iUnit"><option>kg</option><option>gm</option><option>pcs</option><option>ltr</option><option>ml</option><option>box</option><option>pack</option><option>dozen</option></select></div>
+      <div><label>Rate (Rs. per unit)</label><input type="number" step="0.01" min="0" class="in" style="width:100%" id="iRate" placeholder="0"></div>
+      <div><label>Min. Stock Level (Alert)</label><input type="number" step="0.01" min="0" class="in" style="width:100%" id="iMin" placeholder="e.g. 3"></div>
+      <div><label>Opening Stock</label><input type="number" step="0.01" min="0" class="in" style="width:100%" id="iOpen" placeholder="0"></div>
+    </div>
+    <div class="mfoot"><button type="button" class="btn ghost" onclick="closeM('mItem')">Cancel</button>
+    <button class="btn">💾 Save Item</button></div>
+  </form>
+</div>
+
+<!-- ================= TXN MODAL ================= -->
+<div class="ov" id="mTxn" onclick="if(event.target===this)closeM('mTxn')">
+  <form class="modal" id="fTxn" onsubmit="saveTxn(event)">
+    <h3 id="mtTitle">🛒 New Sale Entry</h3>
+    <input type="hidden" id="tId">
+    <div class="fgrid">
+      <div><label>Type</label><select class="in" style="width:100%" id="tType" onchange="updTxnTitle()"><option value="sale">Sale (Stock Out)</option><option value="receive">Receive (Stock In)</option></select></div>
+      <div><label>Date *</label><input type="date" class="in" style="width:100%" id="tDate" required></div>
+      <div class="full"><label>Item *</label><select class="in" style="width:100%" id="tItem" required onchange="fillRate()"></select></div>
+      <div><label>Quantity *</label><input type="number" step="0.01" min="0.01" class="in" style="width:100%" id="tQty" required placeholder="0"></div>
+      <div><label>Rate (Rs.)</label><input type="number" step="0.01" min="0" class="in" style="width:100%" id="tRate" placeholder="0"></div>
+      <div class="full"><label>Note (optional)</label><input class="in" style="width:100%" id="tNote" placeholder="Party name / bill no. etc."></div>
+    </div>
+    <p class="note" id="tStockInfo"></p>
+    <div class="mfoot"><button type="button" class="btn ghost" onclick="closeM('mTxn')">Cancel</button>
+    <button class="btn">💾 Save Entry</button></div>
+  </form>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============ Helpers ============ */
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const r2=n=>Math.round((+n||0)*100)/100;
+const inr=n=>'₹'+(+n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const num=n=>(+n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtD(s){if(!s)return'';const p=s.split('-');return (+p[2])+' '+MON[+p[1]-1]+' '+p[0];}
+function fmtDF(s){if(!s)return'';const p=s.split('-');return (+p[2])+' '+MONF[+p[1]-1]+' '+p[0];}
+function nowStamp(){const d=new Date();let h=d.getHours(),ap=h>=12?'pm':'am';h=h%12||12;
+  return fmtD(todayStr())+', '+h+':'+String(d.getMinutes()).padStart(2,'0')+' '+ap;}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('on'),3000);}
+
+/* ============ Data ============ */
+let items=JSON.parse(localStorage.getItem('ss_items')||'[]');
+let txns=JSON.parse(localStorage.getItem('ss_txns')||'[]');
+let logo=localStorage.getItem('ss_logo')||'';
+function save(){localStorage.setItem('ss_items',JSON.stringify(items));localStorage.setItem('ss_txns',JSON.stringify(txns));}
+const item=id=>items.find(i=>i.id===id);
+function stockOf(id){const it=item(id);if(!it)return{opening:0,received:0,sold:0,current:0};
+  let rec=0,sold=0;txns.forEach(t=>{if(t.itemId===id){t.type==='receive'?rec+=+t.qty:sold+=+t.qty;}});
+  return{opening:+it.openingStock||0,received:r2(rec),sold:r2(sold),current:r2((+it.openingStock||0)+rec-sold)};}
+function statusOf(it,cur){return cur<=0?'out':(it.minStock>0&&cur<=it.minStock?'low':'ok');}
+
+/* ============ Tabs & Modals ============ */
+function switchTab(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='tab-'+t));}
+function closeM(id){$('#'+id).classList.remove('on');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov').forEach(o=>o.classList.remove('on'));});
+
+/* ============ LOGO (Restaurant Branding) ============ */
+function pickLogo(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=e=>{const img=new Image();
+    img.onload=()=>{ // PNG me convert (transparency bhi save rehti hai)
+      const c=document.createElement('canvas');const S=400;c.width=S;c.height=S;
+      const sc=Math.min(S/img.width,S/img.height);const w=img.width*sc,h=img.height*sc;
+      c.getContext('2d').drawImage(img,(S-w)/2,(S-h)/2,w,h);
+      logo=c.toDataURL('image/png');
+      localStorage.setItem('ss_logo',logo);applyLogo();renderLogoPreview();
+      toast('✅ Logo set ho gaya! Ab PDF mein bhi dikhega.');};
+    img.onerror=()=>toast('⚠️ Ye image file nahi khul paayi');
+    img.src=e.target.result;};
+  rd.readAsDataURL(f);inp.value='';}
+function removeLogo(){if(!logo)return;if(!confirm('Logo hataana hai?'))return;
+  logo='';localStorage.removeItem('ss_logo');applyLogo();renderLogoPreview();toast('Logo hat gaya');}
+function applyLogo(){
+  const img=$('#headLogoImg'),box=$('#headLogoBox');
+  if(logo){img.src=logo;img.style.display='block';box.style.display='none';}
+  else{img.style.display='none';box.style.display='flex';}}
+function renderLogoPreview(){const p=$('#logoPrev');
+  p.innerHTML=logo
+    ?`<img src="${logo}" style="width:80px;height:80px;object-fit:contain;border:1.5px solid var(--gold);border-radius:14px;background:#fff">`
+    :`<div class="ph" style="width:80px;height:80px;border-radius:14px;border:1.5px dashed var(--gold)">S</div>`;}
+
+/* ============ Item CRUD ============ */
+let pendingImg=null;
+function pickPhoto(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=220;
+    const sc=Math.max(220/img.width,220/img.height);const w=img.width*sc,h=img.height*sc;
+    c.getContext('2d').drawImage(img,(220-w)/2,(220-h)/2,w,h);
+    pendingImg=c.toDataURL('image/jpeg',0.72);const p=$('#iprev');p.src=pendingImg;p.classList.remove('iprev-ph');};
+    img.src=e.target.result;};rd.readAsDataURL(f);}
+function openItem(id){
+  pendingImg=null;const f=$('#fItem');f.reset();
+  if(id){const it=item(id);$('#miTitle').textContent='✏️ Edit Item';$('#iId').value=it.id;
+    $('#iName').value=it.name;$('#iCat').value=it.category;$('#iUnit').value=it.unit;
+    $('#iRate').value=it.rate;$('#iMin').value=it.minStock;$('#iOpen').value=it.openingStock||0;
+    if(it.image){pendingImg=it.image;const p=$('#iprev');p.src=it.image;p.classList.remove('iprev-ph');}
+    else{const p=$('#iprev');p.src='';p.classList.add('iprev-ph');p.textContent=it.name[0];}
+  }else{$('#miTitle').textContent='➕ Add New Item';$('#iId').value='';
+    const p=$('#iprev');p.src='';p.classList.add('iprev-ph');p.textContent='🍕';}
+  $('#mItem').classList.add('on');}
+function saveItem(e){e.preventDefault();
+  const id=$('#iId').value;const data={name:$('#iName').value.trim(),category:$('#iCat').value.trim()||'Other',
+    unit:$('#iUnit').value,rate:+$('#iRate').value||0,minStock:+$('#iMin').value||0,openingStock:+$('#iOpen').value||0,image:pendingImg};
+  if(id){Object.assign(item(id),data);toast('✅ Item update ho gaya');}
+  else{items.push({id:uid(),createdAt:new Date().toISOString(),...data});toast('✅ Item add ho gaya');}
+  save();closeM('mItem');renderAll();}
+function delItem(id){const it=item(id);if(!it)return;
+  if(!confirm('"'+it.name+'" delete karein?\n(Is item ki saari sale/receive entries bhi delete hongi)'))return;
+  items=items.filter(i=>i.id!==id);txns=txns.filter(t=>t.itemId!==id);save();renderAll();toast('🗑️ Item delete ho gaya');}
+
+/* ============ Transaction CRUD ============ */
+function openTxn(type,itemId){
+  const f=$('#fTxn');f.reset();$('#tId').value='';$('#tDate').value=todayStr();
+  $('#tType').value=type||'sale';
+  const sel=$('#tItem');sel.innerHTML=items.length?'':'<option value="">Pehle item add karein</option>';
+  [...items].sort((a,b)=>a.name.localeCompare(b.name)).forEach(it=>{
+    const o=document.createElement('option');o.value=it.id;o.textContent=it.name+' ('+it.unit+')';sel.appendChild(o);});
+  if(itemId)sel.value=itemId;
+  fillRate();updTxnTitle();updStockInfo();$('#mTxn').classList.add('on');}
+function updTxnTitle(){$('#mtTitle').textContent=$('#tType').value==='sale'?'🛒 New Sale Entry':'➕ New Receive Entry';updStockInfo();}
+function fillRate(){const it=item($('#tItem').value);if(it)$('#tRate').value=it.rate;updStockInfo();}
+function updStockInfo(){const it=item($('#tItem').value);if(!it){$('#tStockInfo').textContent='';return;}
+  const s=stockOf(it.id);$('#tStockInfo').innerHTML='📦 <b>'+esc(it.name)+'</b> ka abhi stock: <b>'+r2(s.current)+' '+it.unit+'</b> (Min: '+it.minStock+')';}
+function saveTxn(e){e.preventDefault();
+  const id=$('#tId').value;const it=item($('#tItem').value);if(!it)return;
+  const data={itemId:it.id,type:$('#tType').value,qty:+$('#tQty').value,rate:+$('#tRate').value||0,
+    date:$('#tDate').value,note:$('#tNote').value.trim()};
+  if(data.type==='sale'){const s=stockOf(it.id);
+    if(data.qty>s.current&&!confirm('⚠️ Stock kam hai!\nAvailable: '+s.current+' '+it.unit+'\nEntry phir bhi save karein?'))return;}
+  if(id){Object.assign(txns.find(t=>t.id===id),data);toast('✅ Entry update ho gayi');}
+  else{txns.push({id:uid(),createdAt:new Date().toISOString(),...data});toast('✅ Entry save ho gayi');}
+  save();closeM('mTxn');renderAll();}
+function editTxn(id){const t=txns.find(x=>x.id===id);if(!t)return;
+  openTxn(t.type,t.itemId);$('#tId').value=t.id;$('#tType').value=t.type;$('#tQty').value=t.qty;
+  $('#tRate').value=t.rate;$('#tDate').value=t.date;$('#tNote').value=t.note||'';fillRate();updTxnTitle();}
+function delTxn(id){if(!confirm('Ye entry delete karein?'))return;
+  txns=txns.filter(t=>t.id!==id);save();renderAll();toast('🗑️ Entry delete ho gayi');}
+
+/* ============ Renderers ============ */
+function renderAll(){renderDashboard();renderInventory();renderTxns();}
+function renderDashboard(){
+  let val=0,low=0;items.forEach(it=>{const s=stockOf(it.id);val+=s.current*it.rate;if(statusOf(it,s.current)!=='ok')low++;});
+  $('#stItems').textContent=items.length;$('#stValue').textContent=inr(r2(val));$('#stLow').textContent=low;
+  const t=todayStr();$('#stToday').textContent=inr(txns.filter(x=>x.type==='sale'&&x.date===t).reduce((s,x)=>s+x.qty*x.rate,0));
+  const lows=items.map(it=>({it,s:stockOf(it.id)})).filter(x=>statusOf(x.it,x.s.current)!=='ok')
+    .sort((a,b)=>(a.s.current/(a.it.minStock||.01))-(b.s.current/(b.it.minStock||.01)));
+  $('#dashLow').innerHTML=lows.length?lows.slice(0,8).map(x=>`<tr class="${statusOf(x.it,x.s.current)}">
+    <td><b>${esc(x.it.name)}</b></td><td class="stock">${r2(x.s.current)} ${x.it.unit}</td><td>${x.it.minStock} ${x.it.unit}</td>
+    <td><b>${r2(Math.max(0,x.it.minStock*1.5-x.s.current))} ${x.it.unit}</b></td></tr>`).join('')
+    :'<tr><td colspan="4" class="empty">😊 Sab stock theek hai!</td></tr>';
+  const rec=[...txns].sort((a,b)=>(b.date+(b.createdAt||'')).localeCompare(a.date+(a.createdAt||''))).slice(0,6);
+  $('#dashRecent').innerHTML=rec.length?rec.map(t=>{const it=item(t.itemId);
+    return `<tr><td>${fmtD(t.date)}</td><td><span class="badge ${t.type==='sale'?'b-sale':'b-rec'}">${t.type==='sale'?'SALE':'RECEIVE'}</span></td>
+    <td>${esc(it?it.name:'(deleted)')}</td><td>${r2(t.qty)} ${it?it.unit:''}</td><td>${inr(t.qty*t.rate)}</td></tr>`;}).join('')
+    :'<tr><td colspan="5" class="empty">Abhi koi entry nahi hui</td></tr>';}
+function renderInventory(){
+  const q=($('#invSearch').value||'').toLowerCase(),cf=$('#invCat').value;
+  const cats=[...new Set(items.map(i=>i.category))].sort();
+  const sel=$('#invCat'),cur=sel.value;
+  sel.innerHTML='<option value="">All</option>'+cats.map(c=>`<option ${c===cur?'selected':''}>${esc(c)}</option>`).join('');
+  const rows=items.map(it=>({it,s:stockOf(it.id)}))
+    .filter(x=>(!cf||x.it.category===cf)&&(!q||x.it.name.toLowerCase().includes(q)||x.it.category.toLowerCase().includes(q)))
+    .sort((a,b)=>a.it.name.localeCompare(b.it.name));
+  $('#invBody').innerHTML=rows.length?rows.map(({it,s})=>{const st=statusOf(it,s.current);
+    return `<tr class="${st}">
+    <td>${it.image?`<img class="thumb" src="${it.image}">`:`<div class="thumb ph">${esc(it.name[0]||'?')}</div>`}</td>
+    <td><b>${esc(it.name)}</b><div class="sub">${esc(it.category)}</div></td>
+    <td>${it.unit}</td><td>${inr(it.rate)}</td><td>${r2(s.received)}</td><td>${r2(s.sold)}</td>
+    <td class="stock">${r2(s.current)}</td><td>${inr(r2(s.current*it.rate))}</td>
+    <td><span class="badge ${st==='out'?'b-out':st==='low'?'b-low':'b-ok'}">${st==='out'?'OUT OF STOCK':st==='low'?'LOW':'OK'}</span></td>
+    <td style="white-space:nowrap">
+      <button class="ibtn" title="Sale" onclick="openTxn('sale','${it.id}')">🛒</button>
+      <button class="ibtn" title="Receive" onclick="openTxn('receive','${it.id}')">➕</button>
+      <button class="ibtn" title="Edit" onclick="openItem('${it.id}')">✏️</button>
+      <button class="ibtn danger" title="Delete" onclick="delItem('${it.id}')">🗑️</button></td></tr>`;}).join('')
+    :`<tr><td colspan="10" class="empty">📦 Koi item nahi mila.<br><button class="btn gold" onclick="loadDemo()">🧪 Demo Data Load Karein</button> <button class="btn" onclick="openItem()">➕ Add Item</button></td></tr>`;}
+function renderTxns(){
+  const ty=$('#ftType').value,f=$('#ftFrom').value,t=$('#ftTo').value,q=($('#ftSearch').value||'').toLowerCase();
+  const rows=txns.filter(x=>(!ty||x.type===ty)&&(!f||x.date>=f)&&(!t||x.date<=t))
+    .map(x=>({x,it:item(x.itemId)}))
+    .filter(o=>!q||(o.it&&o.it.name.toLowerCase().includes(q))||(o.x.note||'').toLowerCase().includes(q))
+    .sort((a,b)=>(b.x.date+(b.x.createdAt||'')).localeCompare(a.x.date+(a.x.createdAt||'')));
+  $('#txnBody').innerHTML=rows.length?rows.map(({x,it})=>`<tr>
+    <td>${fmtD(x.date)}</td><td><span class="badge ${x.type==='sale'?'b-sale':'b-rec'}">${x.type==='sale'?'SALE':'RECEIVE'}</span></td>
+    <td><b>${esc(it?it.name:'(deleted)')}</b></td><td>${r2(x.qty)} ${it?it.unit:''}</td><td>${inr(x.rate)}</td>
+    <td><b>${inr(r2(x.qty*x.rate))}</b></td><td class="sub">${esc(x.note||'')}</td>
+    <td style="white-space:nowrap"><button class="ibtn" onclick="editTxn('${x.id}')">✏️</button>
+    <button class="ibtn danger" onclick="delTxn('${x.id}')">🗑️</button></td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty">Koi entry nahi mili</td></tr>';}
+
+/* ============ PDF Common (LOGO SUPPORT) ============ */
+function drawDefaultLogo(doc){ // jab tak user apna logo upload na kare
+  doc.setFillColor(122,18,21);doc.roundedRect(12.8,7.3,13.4,13.4,2.5,2.5,'F');
+  doc.setTextColor(244,222,185);doc.setFont('helvetica','bold');doc.setFontSize(5.2);
+  doc.text('SATKAAR',19.5,12.8,{align:'center'});doc.setFontSize(3.7);doc.text('S W E E T S',19.5,16.4,{align:'center'});}
+function pdfHeader(doc,title,period){
+  doc.setFillColor(122,18,21);doc.rect(0,0,210,30,'F');
+  doc.setFillColor(255,251,244);doc.roundedRect(11,5.5,19,19,3,3,'F');
+  let drawn=false;
+  if(logo){try{doc.addImage(logo,'PNG',12,6.5,17,17);drawn=true;}catch(e){drawn=false;}}
+  if(!drawn)drawDefaultLogo(doc);
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text('Satkaar Sweets',34,11.5);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(233,178,90);doc.text('Restaurant  |  Bakery  |  Banquet',34,17);
+  doc.setFontSize(7.5);doc.setTextColor(236,216,200);doc.text('Inventory Management Report',34,22.5);
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);doc.text(title,196,11.5,{align:'right'});
+  if(period){doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(250,230,205);doc.text(period,196,17.5,{align:'right'});}
+  doc.setFontSize(7);doc.setTextColor(236,216,200);doc.text('Generated: '+nowStamp(),196,22.5,{align:'right'});
+  doc.setFillColor(200,121,26);doc.rect(0,30,210,1.4,'F');doc.setFillColor(214,69,69);doc.rect(0,31.4,210,1.4,'F');}
+function statBox(doc,x,y,w,label,value,color){
+  doc.setFillColor(250,244,233);doc.roundedRect(x,y,w,16,1.5,1.5,'F');
+  doc.setFillColor(...color);doc.rect(x,y,1.6,16,'F');
+  doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(130,105,90);doc.text(label.toUpperCase(),x+4.5,y+5.5);
+  doc.setFont('helvetica','bold');doc.setFontSize(12.5);doc.setTextColor(45,30,25);doc.text(String(value),x+4.5,y+12.8);}
+function pdfFooter(doc,title){const n=doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){doc.setPage(i);const H=doc.internal.pageSize.getHeight();
+    doc.setDrawColor(217,142,43);doc.setLineWidth(.8);doc.line(14,H-16,196,H-16);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(135,112,95);
+    doc.text('Satkaar Sweets — '+title,14,H-11);doc.text('Page '+i+' of '+n,196,H-11,{align:'right'});}}
+function secTitle(doc,y,txt){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(122,18,21);doc.text(txt,14,y);
+  doc.setDrawColor(217,142,43);doc.setLineWidth(.7);doc.line(14,y+1.6,196,y+1.6);return y+7;}
+function tableOpts(head,body,colW,extra){return Object.assign({head:[head],body,margin:{left:14,right:14},
+  headStyles:{fillColor:[200,121,26],textColor:255,fontSize:8,halign:'center'},
+  bodyStyles:{fontSize:8.5,textColor:[45,35,30]},alternateRowStyles:{fillColor:[253,246,236]},
+  styles:{cellPadding:2.2,lineColor:[240,227,208],lineWidth:.2},columnStyles:colW},extra||{});}
+const lowsList=()=>items.map(it=>({it,s:stockOf(it.id)})).filter(x=>statusOf(x.it,x.s.current)!=='ok')
+  .sort((a,b)=>(a.s.current/(a.it.minStock||.01))-(b.s.current/(b.it.minStock||.01)));
+
+/* ============ PDF Reports ============ */
+function makePDF(){
+  const type=$('#repType').value,from=$('#repFrom').value||todayStr(),to=$('#repTo').value||todayStr();
+  const {jsPDF}=window.jspdf;const doc=new jsPDF();
+  if(type==='low'){
+    pdfHeader(doc,'Low Stock Alert',fmtDF(todayStr()));
+    const lows=lowsList();const val=lows.reduce((t,x)=>t+x.s.current*x.it.rate,0);
+    statBox(doc,14,40,89,'Items Running Low',lows.length,[214,69,69]);
+    statBox(doc,107,40,89,'Value of Low Stock Left','Rs. '+num(r2(val)),[200,121,26]);
+    doc.autoTable(tableOpts(['Item','Category','Unit','Current Stock','Min. Required','Suggested Order','Rate (Rs.)'],
+      lows.map(x=>[x.it.name,x.it.category,x.it.unit,r2(x.s.current),x.it.minStock,r2(Math.max(0,x.it.minStock*1.5-x.s.current)),r2(x.it.rate)]),
+      {0:{halign:'left',fontStyle:'bold',cellWidth:44},1:{cellWidth:26},2:{cellWidth:16},3:{cellWidth:21},4:{cellWidth:24},5:{cellWidth:27},6:{cellWidth:26}},
+      {startY:64}));
+    doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(140,118,100);
+    doc.text('Suggested Order = quantity needed to reach 1.5x the minimum stock level.',14,doc.lastAutoTable.finalY+8);
+    pdfFooter(doc,'Low Stock Alert');doc.save('Satkaar_LowStock_'+todayStr()+'.pdf');
+  }
+  else if(type==='sales'||type==='receive'){
+    const isS=type==='sales';const list=txns.filter(x=>x.type===type&&x.date>=from&&x.date<=to)
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    pdfHeader(doc,isS?'Sales Report':'Purchase / Receive Report',fmtDF(from)+'  –  '+fmtDF(to));
+    const amt=list.reduce((s,x)=>s+x.qty*x.rate,0),qty=list.reduce((s,x)=>s+ +x.qty,0);
+    statBox(doc,14,40,56,'Total Entries',list.length,[122,18,21]);
+    statBox(doc,77,40,56,'Total Quantity',r2(qty),[200,121,26]);
+    statBox(doc,140,40,56,'Total Amount','Rs. '+num(r2(amt)),isS?[214,69,69]:[46,139,87]);
+    doc.autoTable(tableOpts(['Date','Item','Category','Unit','Qty','Rate (Rs.)','Amount (Rs.)'],
+      list.map(x=>{const it=item(x.itemId);return[fmtD(x.date),it?it.name:'(deleted)',it?it.category:'',it?it.unit:'',r2(x.qty),r2(x.rate),r2(x.qty*x.rate)];})
+        .concat([[{content:'TOTAL',colSpan:4,styles:{fontStyle:'bold',fillColor:[240,225,205]}},'','','',r2(qty),'',r2(amt)]]),
+      {0:{cellWidth:24},1:{halign:'left',cellWidth:52},2:{cellWidth:26},3:{cellWidth:15},4:{cellWidth:17},5:{cellWidth:23},6:{cellWidth:25}},{startY:64}));
+    pdfFooter(doc,isS?'Sales Report':'Receive Report');
+    doc.save(`Satkaar_${isS?'Sales':'Receive'}_${from}_to_${to}.pdf`);
+  }
+  else if(type==='inventory'){invPdf(doc,'Stock Report','As on '+fmtDF(todayStr()),$('#repPhotos').checked,'Current Stock Report');}
+  else{ /* complete */
+    pdfHeader(doc,'Complete Report',fmtDF(from)+'  –  '+fmtDF(to));
+    const lows=lowsList();let val=0;items.forEach(it=>{val+=stockOf(it.id).current*it.rate;});
+    const sales=txns.filter(x=>x.type==='sale'&&x.date>=from&&x.date<=to);
+    const recs=txns.filter(x=>x.type==='receive'&&x.date>=from&&x.date<=to);
+    const sAmt=sales.reduce((s,x)=>s+x.qty*x.rate,0),rAmt=recs.reduce((s,x)=>s+x.qty*x.rate,0);
+    statBox(doc,14,40,56,'Total Items',items.length,[122,18,21]);
+    statBox(doc,77,40,56,'Stock Value','Rs. '+num(r2(val)),[200,121,26]);
+    statBox(doc,140,40,56,'Low Stock Items',lows.length,[214,69,69]);
+    statBox(doc,14,60,88,'Sales in Period','Rs. '+num(r2(sAmt)),[214,69,69]);
+    statBox(doc,108,60,88,'Purchases in Period','Rs. '+num(r2(rAmt)),[46,139,87]);
+    let y=invTable(doc,84,$('#repPhotos').checked);
+    doc.addPage();
+    y=secTitle(doc,20,'SALES DETAILS ('+fmtDF(from)+' to '+fmtDF(to)+')');
+    doc.autoTable(tableOpts(['Date','Item','Unit','Qty','Rate (Rs.)','Amount (Rs.)','Note'],
+      sales.map(x=>{const it=item(x.itemId);return[fmtD(x.date),it?it.name:'(deleted)',it?it.unit:'',r2(x.qty),r2(x.rate),r2(x.qty*x.rate),x.note||''];}),
+      {0:{cellWidth:24},1:{halign:'left',cellWidth:52},2:{cellWidth:15},3:{cellWidth:17},4:{cellWidth:23},5:{cellWidth:25},6:{cellWidth:26}},{startY:y}));
+    y=doc.lastAutoTable.finalY+12;
+    y=secTitle(doc,y,'PURCHASE / RECEIVE DETAILS ('+fmtDF(from)+' to '+fmtDF(to)+')');
+    doc.autoTable(tableOpts(['Date','Item','Unit','Qty','Rate (Rs.)','Amount (Rs.)','Note'],
+      recs.map(x=>{const it=item(x.itemId);return[fmtD(x.date),it?it.name:'(deleted)',it?it.unit:'',r2(x.qty),r2(x.rate),r2(x.qty*x.rate),x.note||''];}),
+      {0:{cellWidth:24},1:{halign:'left',cellWidth:52},2:{cellWidth:15},3:{cellWidth:17},4:{cellWidth:23},5:{cellWidth:25},6:{cellWidth:26}},{startY:y}));
+    pdfFooter(doc,'Complete Report');doc.save(`Satkaar_Complete_${from}_to_${to}.pdf`);}
+  toast('📄 PDF download ho gayi!');}
+function invTable(doc,y,photos){
+  const rows=items.map(it=>{const s=stockOf(it.id);const st=statusOf(it,s.current);
+    return{row:[it.image||null,it.name,it.category,it.unit,r2(s.current),it.minStock,r2(it.rate),r2(s.current*it.rate),st==='out'?'OUT':st==='low'?'LOW':'OK'],st};})
+    .sort((a,b)=>a.row[1].localeCompare(b.row[1]));
+  const head=photos?['Photo','Item','Category','Unit','Current','Min.','Rate (Rs.)','Value (Rs.)','Status']
+                   :['Item','Category','Unit','Current','Min.','Rate (Rs.)','Value (Rs.)','Status'];
+  const colW=photos?{0:{cellWidth:15},1:{halign:'left',cellWidth:38},2:{cellWidth:24},3:{cellWidth:13},4:{cellWidth:17},5:{cellWidth:15},6:{cellWidth:20},7:{cellWidth:24},8:{cellWidth:20}}
+                   :{0:{halign:'left',cellWidth:44},1:{cellWidth:28},2:{cellWidth:15},3:{cellWidth:19},4:{cellWidth:17},5:{cellWidth:22},6:{cellWidth:26},7:{cellWidth:22}};
+  doc.autoTable(tableOpts(head,rows.map(r=>photos?r.row:r.row.slice(1)),colW,
+    {startY:y,bodyStyles:{fontSize:8.5,minCellHeight:photos?16:6},
+     didParseCell:d=>{if(d.section==='body'&&d.column.index===(photos?8:7)){const st=rows[d.row.index].st;
+       d.cell.styles.fontStyle='bold';d.cell.styles.textColor=st==='out'?[179,38,30]:st==='low'?[190,80,40]:[31,122,67];}},
+     didDrawCell:d=>{if(photos&&d.section==='body'&&d.column.index===0){const img=rows[d.row.index].row[0];
+       if(img)try{doc.addImage(img,'JPEG',d.cell.x+1,d.cell.y+1.5,13,13);}catch(e){}}}}));
+  return doc.lastAutoTable.finalY;}
+function invPdf(doc,title,period,photos,fname){
+  pdfHeader(doc,title,period);
+  const lows=lowsList();let val=0,out=0;items.forEach(it=>{const s=stockOf(it.id);val+=s.current*it.rate;if(s.current<=0)out++;});
+  statBox(doc,14,40,43.5,'Total Items',items.length,[122,18,21]);
+  statBox(doc,60,40,43.5,'Stock Value','Rs. '+num(r2(val)),[200,121,26]);
+  statBox(doc,106.5,40,43.5,'Low Stock',lows.length,[214,69,69]);
+  statBox(doc,153,40,43,'Out of Stock',out,[179,38,30]);
+  invTable(doc,64,photos);
+  pdfFooter(doc,fname);doc.save('Satkaar_'+fname.replace(/ /g,'_')+'_'+todayStr()+'.pdf');}
+
+/* ============ Excel Export ============ */
+function makeExcel(){
+  const type=$('#repType').value,from=$('#repFrom').value||todayStr(),to=$('#repTo').value||todayStr();
+  const wb=XLSX.utils.book_new();const add=(rows,name)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),name);
+  const invRows=()=>items.map(it=>{const s=stockOf(it.id);return{'Item Name':it.name,'Category':it.category,'Unit':it.unit,
+    'Rate (Rs.)':it.rate,'Opening Stock':s.opening,'Received':s.received,'Sold':s.sold,'Current Stock':s.current,
+    'Stock Value (Rs.)':r2(s.current*it.rate),'Min Stock':it.minStock,'Status':statusOf(it,s.current)==='out'?'OUT OF STOCK':statusOf(it,s.current)==='low'?'LOW':'OK'};});
+  const txnRows=t=>txns.filter(x=>x.type===t&&x.date>=from&&x.date<=to).sort((a,b)=>a.date.localeCompare(b.date))
+    .map(x=>{const it=item(x.itemId);return{Date:x.date,'Item Name':it?it.name:'(deleted)','Category':it?it.category:'',Unit:it?it.unit:'',
+      Qty:x.qty,'Rate (Rs.)':x.rate,'Amount (Rs.)':r2(x.qty*x.rate),Note:x.note||''};});
+  if(type==='low')add(lowsList().map(x=>({'Item Name':x.it.name,'Category':x.it.category,'Unit':x.it.unit,'Current Stock':r2(x.s.current),
+      'Min Required':x.it.minStock,'Suggested Order':r2(Math.max(0,x.it.minStock*1.5-x.s.current)),'Rate (Rs.)':x.it.rate,
+      'Value Left (Rs.)':r2(x.s.current*x.it.rate)})),'Low Stock');
+  else if(type==='sales')add(txnRows('sale'),'Sales');
+  else if(type==='receive')add(txnRows('receive'),'Receive');
+  else if(type==='inventory')add(invRows(),'Current Stock');
+  else{add(invRows(),'Current Stock');add(txnRows('sale'),'Sales');add(txnRows('receive'),'Receive');}
+  XLSX.writeFile(wb,`Satkaar_${type}_${from}_to_${to}.xlsx`);toast('📊 Excel download ho gayi!');}
+function downloadTemplate(){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([
+    {'Item Name':'Kaju Katli','Category':'Sweets','Unit':'kg','Rate':900,'Min Stock':3,'Opening Stock':5},
+    {'Item Name':'Chocolate Cake','Category':'Bakery','Unit':'pcs','Rate':350,'Min Stock':2,'Opening Stock':0}]),'Items');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([
+    {Date:'20-10-2025',Type:'Sale','Item Name':'Kaju Katli',Qty:1,Rate:900,Note:'Counter sale'}]),'Entries');
+  XLSX.writeFile(wb,'Satkaar_Import_Template.xlsx');toast('📥 Template download ho gaya!');}
+
+/* ============ Excel Import ============ */
+function pickCol(row,names){for(const k of Object.keys(row)){const lk=String(k).toLowerCase().trim();
+  if(names.some(n=>lk===n||lk.includes(n)))return row[k];}return'';}
+function parseDate(v){if(v===''||v==null)return'';
+  if(typeof v==='number'){const d=new Date(Math.round((v-25569)*86400000));
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+  const d=new Date(s);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return'';}
+function getOrCreateItem(name){let it=items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+  if(!it){it={id:uid(),name,category:'Other',unit:'kg',rate:0,minStock:1,openingStock:0,image:null,createdAt:new Date().toISOString()};items.push(it);}return it;}
+function doImport(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',raw:false});
+    if(!rows.length)return toast('⚠️ File khali hai');
+    const first=Object.keys(rows[0]).map(k=>k.toLowerCase()).join('|');
+    let ni=0,nt=0,skip=0;
+    const hasType=first.includes('type');
+    if(hasType){ // transactions
+      rows.forEach(r=>{const name=String(pickCol(r,['item name','item','name'])).trim();if(!name)return skip++;
+        const it=getOrCreateItem(name);const type=String(pickCol(r,['type'])).toLowerCase();
+        txns.push({id:uid(),itemId:it.id,type:type.includes('rec')||type.includes('purch')||type==='in'?'receive':'sale',
+          qty:+pickCol(r,['qty','quantity'])||0,rate:+pickCol(r,['rate','price'])||0,
+          date:parseDate(pickCol(r,['date']))||todayStr(),note:String(pickCol(r,['note','remark'])||'')});nt++;});
+    }else{ // items
+      rows.forEach(r=>{const name=String(pickCol(r,['item name','item','name'])).trim();if(!name)return skip++;
+        if(items.some(i=>i.name.toLowerCase()===name.toLowerCase())){const ex=items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+          ex.rate=+pickCol(r,['rate','price'])||ex.rate;ex.minStock=+pickCol(r,['min'])||ex.minStock;return;}
+        items.push({id:uid(),name,category:String(pickCol(r,['category','cat']))||'Other',unit:String(pickCol(r,['unit']))||'kg',
+          rate:+pickCol(r,['rate','price'])||0,minStock:+pickCol(r,['min'])||0,
+          openingStock:+pickCol(r,['opening','stock'])||0,image:null,createdAt:new Date().toISOString()});ni++;});}
+    save();renderAll();toast(`✅ Import: ${ni} items, ${nt} entries${skip?`, ${skip} skip`:''}`);
+  }catch(err){toast('⚠️ File padhne mein problem — sahi Excel template use karein');}
+  inp.value='';};rd.readAsArrayBuffer(f);}
+
+/* ============ Backup / Restore / Demo / Reset ============ */
+function backupData(){const blob=new Blob([JSON.stringify({items,txns,saved:new Date().toISOString()},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='satkaar-backup-'+todayStr()+'.json';a.click();toast('💾 Backup download ho gaya!');}
+function restoreData(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=e=>{try{const d=JSON.parse(e.target.result);
+    if(!confirm('Backup restore karein? Abhi ka data replace ho jayega.'))return;
+    items=d.items||[];txns=d.txns||[];save();renderAll();toast('✅ Backup restore ho gaya!');
+  }catch(err){toast('⚠️ Ye valid backup file nahi hai');}};rd.readAsText(f);inp.value='';}
+function loadDemo(){
+  const D=[['Chana Badam Laddu',0.5,3,420],['Lal Aam Papad Roll',0.56,1,300],['Kaju Roll',0.58,1,850],
+    ['Black Aam Papad',0.65,1,260],['Kaju Bite & Badam Bite',1.4,3,780],['Khajur Barfi',1.4,5,640],
+    ['Dry Fruit Laddu',1.8,3,690],['Honey Dry Fruit Laddu',1.8,3,700],['Pineapple & Meba Bite Choco',2,3,560],
+    ['Anjir Barfi',2.1,5,880],['Mathura Peda',6,3,480],['Gulab Jamun',4,2,360],
+    ['Chocolate Cake (Half kg)',5,2,350],['Butter Croissant',12,6,45],['Kesar Patisa',3,2,520]];
+  items=D.map(d=>({id:uid(),name:d[0],category:d[0].includes('Cake')||d[0].includes('Croissant')?'Bakery':'Sweets',
+    unit:d[0].includes('Croissant')||d[0].includes('Cake')?'pcs':'kg',rate:d[3],minStock:d[2],openingStock:d[1],image:null,createdAt:new Date().toISOString()}));
+  const g=n=>items.find(i=>i.name===n);const y=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  txns=[{id:uid(),itemId:g('Kaju Roll').id,type:'sale',qty:0.5,rate:850,date:todayStr(),note:'Counter sale'},
+    {id:uid(),itemId:g('Gulab Jamun').id,type:'sale',qty:1.5,rate:360,date:todayStr(),note:'Party order'},
+    {id:uid(),itemId:g('Khajur Barfi').id,type:'sale',qty:2,rate:640,date:y,note:'Bill #102'},
+    {id:uid(),itemId:g('Dry Fruit Laddu').id,type:'receive',qty:3,rate:620,date:y,note:'Production'},
+    {id:uid(),itemId:g('Butter Croissant').id,type:'receive',qty:24,rate:30,date:todayStr(),note:'Bakery batch'}];
+  save();renderAll();toast('🧪 Demo data load ho gaya!');}
+function resetAll(){if(!confirm('SARA DATA delete ho jayega. Pakka?'))return;
+  if(!confirm('Ek baar phir soch lein! Backup liya?'))return;
+  items=[];txns=[];save();renderAll();toast('🗑️ Saara data delete ho gaya');}
+
+/* ============ Init ============ */
+ $('#todayChip').textContent='📅 '+fmtDF(todayStr());
+ $('#repFrom').value=todayStr().slice(0,8)+'01';$('#repTo').value=todayStr();
+applyLogo();renderLogoPreview();
+renderAll();
+</script>
+</body>
+</html>
